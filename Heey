@@ -1,0 +1,239 @@
+Implementation Using Selenium & TestNG
+
+1. Project Structure:
+
+hotel-booking-automation/
+│── src/main/java
+│   ├── pages/
+│   │   ├── LoginPage.java
+│   │   ├── UserDashboardPage.java
+│   │   ├── AdminDashboardPage.java
+│── src/test/java
+│   ├── tests/
+│   │   ├── UserBookingTest.java
+│   │   ├── AdminCancellationTest.java
+│   ├── testng.xml
+│── pom.xml
+
+
+---
+
+2. Code Implementation:
+
+Page Object Model (POM) Implementation
+
+Login Page
+
+package pages;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+
+public class LoginPage {
+    WebDriver driver;
+    
+    // Locators
+    By usernameField = By.id("username");
+    By passwordField = By.id("password");
+    By loginButton = By.id("loginBtn");
+
+    // Constructor
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    // Methods
+    public void enterUsername(String username) {
+        driver.findElement(usernameField).sendKeys(username);
+    }
+
+    public void enterPassword(String password) {
+        driver.findElement(passwordField).sendKeys(password);
+    }
+
+    public void clickLogin() {
+        driver.findElement(loginButton).click();
+    }
+
+    public void login(String username, String password) {
+        enterUsername(username);
+        enterPassword(password);
+        clickLogin();
+    }
+}
+
+
+---
+
+User Dashboard Page
+
+package pages;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+
+public class UserDashboardPage {
+    WebDriver driver;
+
+    // Locators
+    By searchHotelField = By.id("searchHotel");
+    By searchButton = By.id("searchBtn");
+    By bookButton = By.id("bookBtn");
+    By successMessage = By.id("successMsg");
+
+    // Constructor
+    public UserDashboardPage(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    // Methods
+    public void searchHotel(String hotelName) {
+        driver.findElement(searchHotelField).sendKeys(hotelName);
+        driver.findElement(searchButton).click();
+    }
+
+    public void bookHotel() {
+        driver.findElement(bookButton).click();
+    }
+
+    public String getSuccessMessage() {
+        return driver.findElement(successMessage).getText();
+    }
+}
+
+
+---
+
+Admin Dashboard Page
+
+package pages;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+
+public class AdminDashboardPage {
+    WebDriver driver;
+
+    // Locators
+    By bookingList = By.id("bookingList");
+    By cancelButton = By.id("cancelBtn");
+    By cancellationMessage = By.id("cancelMsg");
+
+    // Constructor
+    public AdminDashboardPage(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    // Methods
+    public void viewBookings() {
+        driver.findElement(bookingList).click();
+    }
+
+    public void cancelBooking() {
+        driver.findElement(cancelButton).click();
+    }
+
+    public String getCancellationMessage() {
+        return driver.findElement(cancellationMessage).getText();
+    }
+}
+
+
+---
+
+3. Test Cases Using TestNG
+
+User Booking Test
+
+package tests;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import pages.LoginPage;
+import pages.UserDashboardPage;
+
+public class UserBookingTest {
+    WebDriver driver;
+    LoginPage loginPage;
+    UserDashboardPage userDashboardPage;
+
+    @BeforeTest
+    public void setup() {
+        driver = new ChromeDriver();
+        driver.get("https://hotelbooking.com");
+        loginPage = new LoginPage(driver);
+        userDashboardPage = new UserDashboardPage(driver);
+    }
+
+    @Test
+    public void testUserBooking() {
+        loginPage.login("user123", "password123");
+        userDashboardPage.searchHotel("Hilton");
+        userDashboardPage.bookHotel();
+        Assert.assertEquals(userDashboardPage.getSuccessMessage(), "Booking Successful!");
+    }
+
+    @AfterTest
+    public void teardown() {
+        driver.quit();
+    }
+}
+
+
+---
+
+Admin Booking Cancellation Test
+
+package tests;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import pages.LoginPage;
+import pages.AdminDashboardPage;
+
+public class AdminCancellationTest {
+    WebDriver driver;
+    LoginPage loginPage;
+    AdminDashboardPage adminDashboardPage;
+
+    @BeforeTest
+    public void setup() {
+        driver = new ChromeDriver();
+        driver.get("https://hotelbooking.com");
+        loginPage = new LoginPage(driver);
+        adminDashboardPage = new AdminDashboardPage(driver);
+    }
+
+    @Test
+    public void testAdminCancellation() {
+        loginPage.login("admin", "admin123");
+        adminDashboardPage.viewBookings();
+        adminDashboardPage.cancelBooking();
+        Assert.assertEquals(adminDashboardPage.getCancellationMessage(), "Booking Cancelled!");
+    }
+
+    @AfterTest
+    public void teardown() {
+        driver.quit();
+    }
+}
+
+
+---
+
+4. TestNG XML Configuration (testng.xml)
+
+<suite name="HotelBookingSuite">
+    <test name="UserBookingTest">
+        <classes>
+            <class name="tests.UserBookingTest"/>
+        </classes>
+    </test>
+    <test name="AdminCancellationTest">
+        <classes>
+            <class name="tests.AdminCancellationTest"/>
+        </classes>
+    </test>
