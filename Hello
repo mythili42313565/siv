@@ -1,0 +1,258 @@
+
+
+1. Creating a Dummy E-Commerce Website (HTML pages)
+
+
+2. Setting Up a Java Selenium TestNG Project
+
+
+3. Writing Selenium Test Cases for Automation
+
+
+4. Executing the Tests in Eclipse
+
+
+
+
+---
+
+Step 1: Create a Dummy E-Commerce Website
+
+We'll create three HTML files:
+
+products.html (Product Listing Page)
+
+cart.html (Cart Page)
+
+checkout.html (Checkout Page)
+
+
+products.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Listing</title>
+    <script>
+        function addToCart(productId, productName, price) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.push({ id: productId, name: productName, price: price, quantity: 1 });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert(productName + " added to cart!");
+        }
+    </script>
+</head>
+<body>
+    <h1>Products</h1>
+    <input type="text" id="searchInput" placeholder="Search Products">
+    <button id="searchBtn">Search</button>
+
+    <div>
+        <h2 class="product-name">Laptop</h2>
+        <p class="product-price">$1000</p>
+        <button class="add-to-cart" data-product-id="1" onclick="addToCart(1, 'Laptop', 1000)">Add to Cart</button>
+    </div>
+
+    <div>
+        <h2 class="product-name">Phone</h2>
+        <p class="product-price">$500</p>
+        <button class="add-to-cart" data-product-id="2" onclick="addToCart(2, 'Phone', 500)">Add to Cart</button>
+    </div>
+
+    <a href="cart.html">Go to Cart</a>
+</body>
+</html>
+
+cart.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shopping Cart</title>
+    <script>
+        function loadCart() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let cartTable = document.getElementById("cartTable");
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                let row = cartTable.insertRow();
+                row.insertCell(0).innerText = item.name;
+                row.insertCell(1).innerText = "$" + item.price;
+                let qtyCell = row.insertCell(2);
+                let input = document.createElement("input");
+                input.type = "number";
+                input.value = item.quantity;
+                input.className = "cart-quantity";
+                qtyCell.appendChild(input);
+                total += item.price * item.quantity;
+            });
+
+            document.getElementById("grandTotal").innerText = "$" + total;
+        }
+    </script>
+</head>
+<body onload="loadCart()">
+    <h1>Shopping Cart</h1>
+    <table id="cartTable" border="1">
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+        </tr>
+    </table>
+    <p>Grand Total: <span id="grandTotal"></span></p>
+    <a href="checkout.html"><button id="checkoutBtn">Proceed to Checkout</button></a>
+</body>
+</html>
+
+checkout.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+</head>
+<body>
+    <h1>Checkout</h1>
+    <form>
+        <label>Name: <input type="text" id="billingName"></label><br>
+        <label>Address: <input type="text" id="billingAddress"></label><br>
+        <label>Payment Method: 
+            <select id="paymentMethod">
+                <option>Credit Card</option>
+                <option>UPI</option>
+                <option>Net Banking</option>
+            </select>
+        </label><br>
+        <button type="button" id="placeOrderBtn" onclick="document.getElementById('orderSuccess').style.display='block'">
+            Place Order
+        </button>
+    </form>
+    <div id="orderSuccess" style="display: none;">Order Placed Successfully!</div>
+</body>
+</html>
+
+
+---
+
+Step 2: Set Up a Java Selenium TestNG Project in Eclipse
+
+1. Open Eclipse and create a New Java Project.
+
+
+2. Add the required dependencies (Selenium WebDriver, TestNG) via Maven (pom.xml).
+
+pom.xml
+
+<dependencies>
+    <dependency>
+        <groupId>org.seleniumhq.selenium</groupId>
+        <artifactId>selenium-java</artifactId>
+        <version>4.10.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>7.4.0</version>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+
+
+
+
+---
+
+Step 3: Write Selenium TestNG Test Cases
+
+Create a TestNG class named ECommerceTest.java in src/test/java.
+
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.Select;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+public class ECommerceTest {
+    WebDriver driver;
+
+    @BeforeClass
+    public void setup() {
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        driver.manage().window().maximize();
+    }
+
+    @Test(priority = 1)
+    public void searchAndAddToCart() {
+        driver.get("file:///path/to/products.html");
+        driver.findElement(By.id("searchInput")).sendKeys("Laptop");
+        driver.findElement(By.id("searchBtn")).click();
+        driver.findElement(By.xpath("//button[@data-product-id='1']")).click();
+        driver.switchTo().alert().accept(); 
+    }
+
+    @Test(priority = 2)
+    public void verifyCart() {
+        driver.get("file:///path/to/cart.html");
+        WebElement product = driver.findElement(By.xpath("//tr[2]/td[1]"));
+        Assert.assertEquals(product.getText(), "Laptop");
+
+        WebElement total = driver.findElement(By.id("grandTotal"));
+        Assert.assertTrue(total.getText().contains("$1000"));
+    }
+
+    @Test(priority = 3)
+    public void updateCartAndCheckout() {
+        WebElement qtyInput = driver.findElement(By.className("cart-quantity"));
+        qtyInput.clear();
+        qtyInput.sendKeys("2");
+        driver.findElement(By.id("checkoutBtn")).click();
+    }
+
+    @Test(priority = 4)
+    public void completeCheckout() {
+        driver.get("file:///path/to/checkout.html");
+        driver.findElement(By.id("billingName")).sendKeys("John Doe");
+        driver.findElement(By.id("billingAddress")).sendKeys("123 Street");
+        Select paymentMethod = new Select(driver.findElement(By.id("paymentMethod")));
+        paymentMethod.selectByVisibleText("Credit Card");
+        driver.findElement(By.id("placeOrderBtn")).click();
+        
+        WebElement successMsg = driver.findElement(By.id("orderSuccess"));
+        Assert.assertTrue(successMsg.isDisplayed());
+    }
+
+    @AfterClass
+    public void teardown() {
+        driver.quit();
+    }
+}
+
+
+---
+
+Step 4: Run the Test in Eclipse
+
+Right-click on ECommerceTest.java
+
+Select Run As → TestNG Test
+
+
+This script will:
+
+Search for a product
+
+Add it to the cart
+
+Verify the cart contents
+
+Modify quantity
+
+Proceed to checkout
+
+Place an order
